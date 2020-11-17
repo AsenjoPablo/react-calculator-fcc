@@ -3,197 +3,60 @@ import "../styles/Calculator.css";
 
 const Calculator = (props) => {
   const [display, setDisplay] = useState("0");
-  const [operationMode, setOperationMode] = useState(false);
-  const [currentOperation, setCurrentOperation] = useState("");
-  const [firstNum, setFirstNum] = useState(0);
-  const [prevSol, setPrevSol] = useState(0);
   const [addedDecimal, setAddedDecimal] = useState(false);
-
-  const handleClear = () => {
-    setOperationMode(false);
-    setCurrentOperation("");
-    setAddedDecimal(false);
-  };
 
   const hardClear = () => {
     setDisplay("0");
-    setPrevSol(0);
-    setOperationMode(false);
-    setCurrentOperation("");
     setAddedDecimal(false);
   };
 
-  const handleDisplay = (value) => {
-    // prevents multiple zero
-    if (value === 0 && display === "0") {
+  const addNumber = (number) => {
+    // this prevents starting with more than one zero
+    if (display === "0" && number === 0) {
+      console.log("Starting with a 0");
       setDisplay("0");
+
+      // this will prevent from starting with 08 with no decimal
+    } else if (display === "0") {
+      setDisplay(number);
+
+      // this will just add the number
     } else {
-      if (display === "0") {
-        if (display.length < 21) {
-          // removes zero, adds as a first number
-          setDisplay(value.toString());
-
-          if (!operationMode) {
-            setFirstNum(display + value.toString());
-          }
-        }
-      } else {
-        if (display.length < 21) {
-          // keeps previous number, adds next
-          setDisplay(display + value.toString());
-
-          if (!operationMode) {
-            setFirstNum(display + value.toString());
-          }
-        } else {
-          setDisplay("Too many numbers!");
-        }
-      }
+      setDisplay(display + number.toString());
     }
   };
 
   const handleDecimal = () => {
-    // checks if last char is not a dot
-    if (display.charAt(display.length - 1) !== "." && !addedDecimal) {
+    // if last char is a ".", it won't add anything
+    if (!addedDecimal) {
       setDisplay(display + ".");
       setAddedDecimal(true);
+      console.log("Decimal deactivated");
     }
   };
 
-  const handleOperation = (value) => {
-    // if there is no first value, previous solution is added as first number
-    if (!operationMode && display === "0") {
-      setDisplay(prevSol + value);
-      setOperationMode(true);
-      handleOperationType(value);
-      // added so we can add more decimal numbers
-      setAddedDecimal(false);
-    } else if (!operationMode) {
-      setDisplay(display + value);
-      setOperationMode(true);
-      handleOperationType(value);
-      // added so we can add more decimal numbers
-      setAddedDecimal(false);
-
-      // PENDIENTE: GESTIÓN DE MULTIPLICACIONES CON NÚMEROS NEGATIVOS
-    } else if (operationMode) {
-      if (value !== "-") {
-        if (
-          display.charAt(display.length - 1) === "*" ||
-          display.charAt(display.length - 1) === "+" ||
-          display.charAt(display.length - 1) === "-" ||
-          display.charAt(display.length - 1) === "/"
-        ) {
-          setDisplay(display.slice(0, display.length - 1) + value);
-          handleOperationType(value);
-        }
-      } else {
-        setDisplay(display + "-");
-      }
-    }
-  };
-
-  const handleOperationType = (value) => {
-    switch (value) {
-      case "+":
-        setCurrentOperation("+");
-        break;
-      case "-":
-        setCurrentOperation("-");
-        break;
-      case "*":
-        setCurrentOperation("*");
-        break;
-      case "/":
-        setCurrentOperation("/");
-        break;
-
-      default:
-        console.log("No operation defined");
-        break;
-    }
+  const handleOperation = (operator) => {
+    setDisplay(display + operator);
+    setAddedDecimal(false);
+    console.log("Decimal activated");
   };
 
   const handleSolution = () => {
-    let num1;
-    if (firstNum === 0) {
-      num1 = prevSol;
-    } else {
-      num1 = Number(firstNum);
-    }
+    // replacing "invalid" operator combinations
+    let replacedStr = display.replace(/\W+\+/g, "+");
+    replacedStr = replacedStr.replace(/\W+\*/g, "*");
+    replacedStr = replacedStr.replace(/\W+\//g, "/");
 
-    // decimal checker
-    let ind;
-    if (addedDecimal) {
-      ind = display.search(/[0-9]\.[0-9]+$/g);
-    } else {
-      ind = display.search(/[0-9]+$/g);
-    }
+    console.log("Actual display is -> " + display);
 
-    // this will get the index of the second number and assign it to num2
-    let num2 = Number(display.slice(ind));
-
-    let result;
-
-    switch (currentOperation) {
-      case "+":
-        result = num1 + num2;
-        setDisplay(result);
-        setPrevSol(result);
-        handleClear();
-
-        // reset everything but not displayed numbers
-        setOperationMode(false);
-        setCurrentOperation("");
-        setFirstNum(0);
-        break;
-      case "-":
-        result = num1 - num2;
-        setDisplay(result);
-        setPrevSol(result);
-        handleClear();
-
-        // reset everything but not displayed numbers
-        setOperationMode(false);
-        setCurrentOperation("");
-        setFirstNum(0);
-        break;
-      case "*":
-        // checker for negative numbers
-        if (display.indexOf("*") > 0 && display.indexOf("-") > 0) {
-          num2 = -num2;
-        }
-
-        result = num1 * num2;
-        setDisplay(result);
-        setPrevSol(result);
-        handleClear();
-
-        // reset everything but not displayed numbers
-        setOperationMode(false);
-        setCurrentOperation("");
-        setFirstNum(0);
-        break;
-      case "/":
-        result = num1 / num2;
-        setDisplay(result);
-        setPrevSol(result);
-        handleClear();
-
-        // reset everything but not displayed numbers
-        setOperationMode(false);
-        setCurrentOperation("");
-        setFirstNum(0);
-        break;
-
-      default:
-        break;
-    }
+    console.log("Evaluating ... " + replacedStr);
+    setDisplay(eval(replacedStr));
+    console.log("End result was -> " + eval(replacedStr));
+    setAddedDecimal(false);
   };
 
   return (
     <div id="button-container">
-      <div id="prevsol">S: {prevSol}</div>
       <div id="display">{display}</div>
 
       {
@@ -219,21 +82,21 @@ const Calculator = (props) => {
         // first row
       }
       <button
-        onClick={() => handleDisplay(7)}
+        onClick={() => addNumber(7)}
         className="number-button button"
         id="seven"
       >
         7
       </button>
       <button
-        onClick={() => handleDisplay(8)}
+        onClick={() => addNumber(8)}
         className="number-button button"
         id="eight"
       >
         8
       </button>
       <button
-        onClick={() => handleDisplay(9)}
+        onClick={() => addNumber(9)}
         className="number-button button"
         id="nine"
       >
@@ -251,21 +114,21 @@ const Calculator = (props) => {
         // second row
       }
       <button
-        onClick={() => handleDisplay(4)}
+        onClick={() => addNumber(4)}
         className="number-button button"
         id="four"
       >
         4
       </button>
       <button
-        onClick={() => handleDisplay(5)}
+        onClick={() => addNumber(5)}
         className="number-button button"
         id="five"
       >
         5
       </button>
       <button
-        onClick={() => handleDisplay(6)}
+        onClick={() => addNumber(6)}
         className="number-button button"
         id="six"
       >
@@ -283,21 +146,21 @@ const Calculator = (props) => {
         // third row
       }
       <button
-        onClick={() => handleDisplay(1)}
+        onClick={() => addNumber(1)}
         className="number-button button"
         id="one"
       >
         1
       </button>
       <button
-        onClick={() => handleDisplay(2)}
+        onClick={() => addNumber(2)}
         className="number-button button"
         id="two"
       >
         2
       </button>
       <button
-        onClick={() => handleDisplay(3)}
+        onClick={() => addNumber(3)}
         className="number-button button"
         id="three"
       >
@@ -315,7 +178,7 @@ const Calculator = (props) => {
         // fourth row
       }
       <button
-        onClick={() => handleDisplay(0)}
+        onClick={() => addNumber(0)}
         className="number-button button"
         id="zero"
       >
